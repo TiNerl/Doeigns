@@ -1,0 +1,97 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Isso vai impedir a validação no schema
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Papel {
+  DOADOR
+  ORGANIZADOR
+}
+
+enum StatusCampanha {
+  ABERTA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum StatusDoacao {
+  PENDENTE
+  CONFIRMADA
+  ENTREGUE
+  CANCELADA
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  papel     Papel    @default(DOADOR)
+  criadoEm  DateTime @default(now())
+
+  campanhas Campanha[]
+  doacoes   Doacao[]
+}
+
+model Campanha {
+  id            String         @id @default(uuid())
+  titulo        String
+  descricao     String
+  status        StatusCampanha @default(ABERTA)
+  dataInicio    DateTime
+  dataFim       DateTime?
+  organizadorId String
+  organizador   Usuario        @relation(fields: [organizadorId], references: [id])
+  criadoEm      DateTime       @default(now())
+
+  pontosColeta     PontoColeta[]
+  itensNecessarios ItemNecessario[]
+
+  @@index([organizadorId])
+}
+
+model PontoColeta {
+  id         String   @id @default(uuid())
+  nome       String
+  endereco   String
+  latitude   Float?
+  longitude  Float?
+  campanhaId String
+  campanha   Campanha @relation(fields: [campanhaId], references: [id])
+  criadoEm   DateTime @default(now())
+
+  @@index([campanhaId])
+}
+
+model ItemNecessario {
+  id                   String   @id @default(uuid())
+  nome                 String
+  quantidadeNecessaria Int
+  quantidadeArrecadada Int      @default(0)
+  campanhaId           String
+  campanha             Campanha @relation(fields: [campanhaId], references: [id])
+  doacoes              Doacao[]
+  criadoEm             DateTime @default(now())
+
+  @@index([campanhaId])
+}
+
+model Doacao {
+  id             String       @id @default(uuid())
+  doadorId       String
+  doador         Usuario      @relation(fields: [doadorId], references: [id])
+  itemId         String
+  item           ItemNecessario @relation(fields: [itemId], references: [id])
+  quantidade     Int
+  status         StatusDoacao @default(PENDENTE)
+  comprovanteUrl String?
+  criadoEm       DateTime     @default(now())
+
+  @@index([doadorId])
+  @@index([itemId])
+}

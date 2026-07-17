@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+uploads
+*.log
+
+# Build do frontend copiado para cá em produção (ver Dockerfile)
+public/*
+!public/.gitkeep
